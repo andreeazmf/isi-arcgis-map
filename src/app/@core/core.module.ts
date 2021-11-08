@@ -142,7 +142,7 @@ export const NB_CORE_PROVIDERS = [
   LayoutService,
   PlayerService,
   SeoService,
-  StateService,
+  StateService
 ];
 
 @NgModule({

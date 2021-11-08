@@ -21,6 +21,12 @@ import {
   NbWindowModule,
 } from '@nebular/theme';
 
+import { AngularFireModule } from '@angular/fire';
+import { AngularFireDatabaseModule } from '@angular/fire/database';
+import { environment } from '../environments/environment';
+import { FirebaseService } from './@core/database/firebase';
+import { FirebaseMockService } from './@core/database/firebase-mock';
+
 @NgModule({
   declarations: [AppComponent],
   imports: [
@@ -39,8 +45,15 @@ import {
     }),
     CoreModule.forRoot(),
     ThemeModule.forRoot(),
+    // AngularFireModule.initializeApp(environment.firebase, 'my-app-name'),
+    // AngularFireDatabaseModule
+
   ],
   bootstrap: [AppComponent],
+  providers: [
+    FirebaseService,
+    FirebaseMockService
+  ]
 })
 export class AppModule {
 }

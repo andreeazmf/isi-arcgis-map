@@ -1,5 +1,9 @@
 import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from "@angular/core";
 import { setDefaultOptions, loadModules } from 'esri-loader';
+import { Subscription } from "rxjs";
+import { ITestItem } from "../../../@core/database/firebase";
+import { FirebaseMockService } from "../../../@core/database/firebase-mock";
+// import { FirebaseService } from "../../../@core/database/firebase";
 
 @Component({
     selector: "app-esri-map",
@@ -10,23 +14,6 @@ export class ArcGISMapComponent implements OnInit, OnDestroy {
     // The <div> where we will place the map
     @ViewChild("mapViewNode", { static: true }) private mapViewEl: ElementRef;
     view: __esri.MapView;
-
-
-
-    fruits: string[] = [
-        'Lemons',
-        'Raspberries',
-        'Strawberries',
-        'Blackberries',
-        'Kiwis',
-        'Grapefruit',
-        'Avocado',
-        'Watermelon',
-        'Cantaloupe',
-        'Oranges',
-        'Peaches',
-    ];
-
     timeoutHandler = null;
 
     _Map;
@@ -43,7 +30,42 @@ export class ArcGISMapComponent implements OnInit, OnDestroy {
     dir: number = 0;
     count: number = 0;
 
-    constructor() { }
+    subscriptionList: Subscription;
+    subscriptionObj: Subscription;
+
+    isConnected: boolean = false;
+
+    constructor(
+        // private fbs: FirebaseService
+        private fbs: FirebaseMockService
+    ) { }
+
+    connectFirebase() {
+        if (this.isConnected) {
+            return;
+        }
+        this.isConnected = true;
+        this.fbs.connectToDatabase();
+        this.subscriptionList = this.fbs.getChangeFeedList().subscribe((items: ITestItem[]) => {
+            console.log("got new items from list: ", items);
+        });
+        this.subscriptionObj = this.fbs.getChangeFeedObj().subscribe((stat: ITestItem[]) => {
+            console.log("item updated from object: ", stat);
+        });
+    }
+
+    addTestItem() {
+        this.fbs.addTestItem();
+    }
+
+    disconnectFirebase() {
+        if (this.subscriptionList != null) {
+            this.subscriptionList.unsubscribe();
+        }
+        if (this.subscriptionObj != null) {
+            this.subscriptionObj.unsubscribe();
+        }
+    }
 
     async initializeMap() {
         try {
@@ -223,5 +245,6 @@ export class ArcGISMapComponent implements OnInit, OnDestroy {
             this.view.container = null;
         }
         this.stopTimer();
+        this.disconnectFirebase();
     }
 }
