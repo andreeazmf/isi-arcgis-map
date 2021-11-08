@@ -1,0 +1,12 @@
+@import "../../../@theme/styles/themes";
+
+@include nb-install-component() {
+    nb-card-body {
+        padding: 0;
+    }
+
+    .arcgis-div {
+        // height: calc(100vh - 300px);
+        height: 100%;
+    }
+}

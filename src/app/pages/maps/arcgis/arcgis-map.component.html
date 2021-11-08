@@ -1,0 +1,24 @@
+
+<div class="lists row">
+    <div class="col-md-12 col-lg-4 col-xxxl-4">
+        <nb-card class="list-card">
+            <nb-card-header>Some Fruits</nb-card-header>
+            <nb-card-body>
+                <nb-list>
+                    <nb-list-item *ngFor="let fruit of fruits">
+                        {{ fruit }}
+                    </nb-list-item>
+                </nb-list>
+            </nb-card-body>
+        </nb-card>
+    </div>
+
+    <div class="col-md-12 col-lg-8 col-xxxl-8">
+        <nb-card size="large">
+            <nb-card-header>ArcGIS Maps</nb-card-header>
+            <nb-card-body>
+                <div #mapViewNode class="arcgis-div"></div>
+            </nb-card-body>
+        </nb-card>
+    </div>
+</div>
