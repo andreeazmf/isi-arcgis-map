@@ -41,4 +41,13 @@ export class FirebaseService {
         this.db.object('stat').set([item]);
     }
 
+    addUpdatingItem(itemName, itemLat, itemLng) {
+        let item = {
+            name: itemName,
+            lat: itemLat,
+            lng: itemLng
+        };
+
+        this.db.object(`updating-item`).set([item]);
+    }
 }
