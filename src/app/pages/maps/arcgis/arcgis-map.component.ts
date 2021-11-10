@@ -2,8 +2,8 @@ import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from "@angular/co
 import { setDefaultOptions, loadModules } from 'esri-loader';
 import { Subscription } from "rxjs";
 import { ITestItem } from "../../../@core/database/firebase";
-import { FirebaseMockService } from "../../../@core/database/firebase-mock";
-// import { FirebaseService } from "../../../@core/database/firebase";
+// import { FirebaseMockService } from "../../../@core/database/firebase-mock";
+import { FirebaseService } from "../../../@core/database/firebase";
 
 @Component({
     selector: "app-esri-map",
@@ -36,8 +36,8 @@ export class ArcGISMapComponent implements OnInit, OnDestroy {
     isConnected: boolean = false;
 
     constructor(
-        // private fbs: FirebaseService
-        private fbs: FirebaseMockService
+        private fbs: FirebaseService
+        // private fbs: FirebaseMockService
     ) { }
 
     connectFirebase() {
