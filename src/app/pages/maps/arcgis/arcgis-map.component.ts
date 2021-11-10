@@ -16,11 +16,22 @@ export class ArcGISMapComponent implements OnInit, OnDestroy {
     view: __esri.MapView;
     timeoutHandler = null;
 
+    _apiKey = "AAPKf011d888c80f41089ad402898481e915n2A18VMfnXgcQ9neYJc2_DcEEsV3YW-Zk6yTvu1bN2iQFuGmt7wUwJib5E7fi5ry"
+
     _Map;
     _MapView;
     _FeatureLayer;
     _Graphic;
     _GraphicsLayer;
+    _Point;
+    _route;
+    _RouteParameters;
+    _FeatureSet;
+    _esriConfig;
+
+    routeUrl;
+    routeParameters;
+    directionsElement;
 
     map: __esri.Map;
     pointGraphic: __esri.Graphic;
@@ -29,6 +40,11 @@ export class ArcGISMapComponent implements OnInit, OnDestroy {
     pointCoords: number[] = [-118.73682450024377, 34.07817583063242];
     dir: number = 0;
     count: number = 0;
+
+    center;
+    origin;
+    stop;
+    destination;
 
     subscriptionList: Subscription;
     subscriptionObj: Subscription;
@@ -70,30 +86,47 @@ export class ArcGISMapComponent implements OnInit, OnDestroy {
     async initializeMap() {
         try {
 
-            // before loading the modules for the first time,
-            // also lazy load the CSS for the version of
-            // the script that you're loading from the CDN
-            setDefaultOptions({ css: true });
+            // Before loading the modules for the first time, also lazy load
+            // the CSS for the version of the script that you're loading from the CDN.
+            // The default Arcgis verson is 4.17 and it doesn't support some
+            // components, so change it to one above 4.20.
+            setDefaultOptions({ css: true, version: "4.21" });
 
             // Load the modules for the ArcGIS API for JavaScript
-            const [Map, MapView, FeatureLayer, Graphic, GraphicsLayer] = await loadModules([
-                "esri/Map",
-                "esri/views/MapView",
-                "esri/layers/FeatureLayer",
-                "esri/Graphic",
-                "esri/layers/GraphicsLayer"
-            ]);
+            const [Map, MapView, FeatureLayer, Graphic, GraphicsLayer,
+                Point, route, RouteParameters, FeatureSet, esriConfig] = await loadModules([
+                    "esri/Map",
+                    "esri/views/MapView",
+                    "esri/layers/FeatureLayer",
+                    "esri/Graphic",
+                    "esri/layers/GraphicsLayer",
+                    "esri/geometry/Point",
+                    "esri/rest/route",
+                    "esri/rest/support/RouteParameters",
+                    "esri/rest/support/FeatureSet",
+                    "esri/config"
+                ]);
 
             this._Map = Map;
             this._MapView = MapView;
             this._FeatureLayer = FeatureLayer;
             this._Graphic = Graphic;
             this._GraphicsLayer = GraphicsLayer;
+            this._Point = Point;
+            this._route = route;
+            this._RouteParameters = RouteParameters;
+            this._FeatureSet = FeatureSet;
+            this._esriConfig = esriConfig;
+
+            this._esriConfig.apiKey = this._apiKey;
 
             // Configure the Map
             const mapProperties = {
                 basemap: "streets-vector"
             };
+
+            // Initial routing points
+            this.initPoints();
 
             this.map = new Map(mapProperties);
 
@@ -103,7 +136,8 @@ export class ArcGISMapComponent implements OnInit, OnDestroy {
             // Initialize the MapView
             const mapViewProperties = {
                 container: this.mapViewEl.nativeElement,
-                center: [-118.73682450024377, 34.07817583063242],
+                // center: [-118.73682450024377, 34.07817583063242],
+                center: this.center,
                 zoom: 10,
                 map: this.map
             };
@@ -117,13 +151,53 @@ export class ArcGISMapComponent implements OnInit, OnDestroy {
                 console.log("map moved: ", point.longitude, point.latitude);
             });
 
-            await this.view.when(); // wait for map to load
+            // Without routing:
+            // await this.view.when(); // wait for map to load
+
+            // With routing:
+            await this.view.when(() => {
+                this.addGraphic("start", this.origin);
+                this.addGraphic("stop", this.stop);
+                this.addGraphic("finish", this.destination);
+                this.getRoute();
+            });
+
+            // Click to select 3 points (start -> stop -> finish) and get routes
+            this.view.on("click", (event) => {
+                if (this.view.graphics.length === 0) {
+                    this.addGraphic("start", event.mapPoint);
+                } else if (this.view.graphics.length === 1) {
+                    this.addGraphic("stop", event.mapPoint);
+                } else if (this.view.graphics.length === 2) {
+                    this.addGraphic("finish", event.mapPoint);
+                    this.getRoute();
+                } else {
+                    this.view.graphics.removeAll();
+                    this.view.ui.empty("top-right");
+                    this.addGraphic("start", event.mapPoint);
+                }
+            });
+
             console.log("ArcGIS map loaded");
             return this.view;
         } catch (error) {
             console.error("EsriLoader: ", error);
             throw error;
         }
+    }
+
+    initPoints() {
+        // Initial center of the map view
+        this.center = new this._Point([-122.62,45.526201]);
+
+        // Initial origin of route
+        this.origin = new this._Point([-122.690176,45.522054]);
+
+        // Initial stop of route
+        this.stop =  new this._Point([-122.614995,45.526201]);
+
+        // Initial destination of route
+        this.destination = new this._Point([-122.68782,45.51238]);
     }
 
     addFeatureLayers() {
@@ -246,5 +320,90 @@ export class ArcGISMapComponent implements OnInit, OnDestroy {
         }
         this.stopTimer();
         this.disconnectFirebase();
+    }
+
+    addGraphic(type, point) {
+        let color = "#ffffff";
+        let outlineColor = "#000000"
+        let size = "12px";
+        if (type == "start") {
+            color = "#ffffff";
+        } else if (type == "stop") {
+            color = "#000000";
+            outlineColor = "#ffffff";
+            size = "8px";
+        } else {
+            color = "#000000";
+            outlineColor = "#ffffff";
+        }
+        const graphic = new this._Graphic({
+            symbol: {
+                type: "simple-marker",
+                color: color,
+                size: size,
+                outline: {
+                    color: outlineColor,
+                    width: "1px"
+                }
+            },
+            geometry: point
+        });
+        this.view.graphics.add(graphic);
+    }
+
+    getRoute() {
+        this.routeUrl = "https://route-api.arcgis.com/arcgis/rest/services/World/Route/NAServer/Route_World";
+
+        this.routeParameters = new this._RouteParameters({
+            stops: new this._FeatureSet({
+                features: this.view.graphics.toArray()
+            }),
+            returnDirections: true,
+            directionsLanguage: "en"
+        });
+
+        this._route.solve(this.routeUrl, this.routeParameters)
+            .then((data) => {
+                if (data.routeResults.length > 0) {
+                    this.showRoute(data.routeResults[0].route);
+                    this.showDirections(data.routeResults[0].directions.features);
+                }
+            })
+            .catch((error) => {
+                console.log(error);
+            })
+    }
+
+    showRoute(routeResult) {
+        routeResult.symbol = {
+            type: "simple-line",
+            color: [5, 150, 255],
+            width: 3
+        };
+        this.view.graphics.add(routeResult, 0);
+    }
+
+    showDirections(directions) {
+        this.directionsElement = document.createElement("div");
+        this.directionsElement.innerHTML = "<h3>Directions</h3>";
+        this.directionsElement.classList = "esri-widget esri-widget--panel esri-directions__scroller directions";
+        this.directionsElement.style.marginTop = "0";
+        this.directionsElement.style.padding = "0 15px";
+        this.directionsElement.style.minHeight = "365px";
+
+        this.showRouteDirections(directions);
+
+        this.view.ui.empty("top-right");
+        this.view.ui.add(this.directionsElement, "top-right");
+    }
+
+    showRouteDirections(directions) {
+        const directionsList = document.createElement("ol");
+        directions.forEach(function (result, i) {
+            const direction = document.createElement("li");
+            direction.innerHTML = result.attributes.text + ((result.attributes.length > 0) ? " (" + result.attributes.length.toFixed(2) + " miles)" : "");
+            directionsList.appendChild(direction);
+        });
+        this.directionsElement.appendChild(directionsList);
     }
 }
