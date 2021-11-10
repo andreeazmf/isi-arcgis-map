@@ -13,6 +13,7 @@ export const environment = {
     // add your Firebase config here
     apiKey: "AIzaSyA2sw_A9YmpTo-R2FT-weQurQmA53t8eWo",
     authDomain: "isi-lab-5.firebaseapp.com",
+    databaseURL: "https://isi-lab-5-default-rtdb.europe-west1.firebasedatabase.app",
     projectId: "isi-lab-5",
     storageBucket: "isi-lab-5.appspot.com",
     messagingSenderId: "806639664683",
