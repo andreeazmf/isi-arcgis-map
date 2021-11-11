@@ -14,7 +14,7 @@ Route: Inglewood &#8594; Anaheim &#8594; El Monte\
 <img src="https://github.com/andreeazmf/isi-arcgis-map/blob/master/demo_images/route_three_points.png" width="70%" height="70%"/>
 
 ## Task 2
-Saved the animated point coordinated in the Firebase Realtime Database.\
+Saved the animated point coordinates in the Firebase Realtime Database.\
 As it's continuously changing its position, I created a new function
 `addUpdatingItem()` to only set the firebase object, not add it as a
 new element to a list each time.
