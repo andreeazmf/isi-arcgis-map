@@ -74,6 +74,10 @@ export class ArcGISMapComponent implements OnInit, OnDestroy {
         this.fbs.addTestItem();
     }
 
+    addUpdatingItem(itemName, itemLat, itemLng) {
+        this.fbs.addUpdatingItem(itemName, itemLat, itemLng);
+    }
+
     disconnectFirebase() {
         if (this.subscriptionList != null) {
             this.subscriptionList.unsubscribe();
@@ -297,6 +301,9 @@ export class ArcGISMapComponent implements OnInit, OnDestroy {
         }
 
         this.addPoint(this.pointCoords[1], this.pointCoords[0]);
+
+        // Save animated point coord into database
+        this.addUpdatingItem('animated-point', this.pointCoords[1], this.pointCoords[0]);
     }
 
     stopTimer() {
