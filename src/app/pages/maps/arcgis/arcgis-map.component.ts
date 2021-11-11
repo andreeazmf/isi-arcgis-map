@@ -187,17 +187,20 @@ export class ArcGISMapComponent implements OnInit, OnDestroy {
     }
 
     initPoints() {
+        const coordBeverlyHills = [-118.400352, 34.073620];
+        const coordLongBeach = [-118.193741, 33.770050];
+
         // Initial center of the map view
-        this.center = new this._Point([-122.62,45.526201]);
+        this.center = new this._Point(coordBeverlyHills);
 
         // Initial origin of route
-        this.origin = new this._Point([-122.690176,45.522054]);
+        this.origin = new this._Point(coordBeverlyHills);
 
         // Initial stop of route
-        this.stop =  new this._Point([-122.614995,45.526201]);
+        this.stop =  new this._Point(coordLongBeach);
 
         // Initial destination of route
-        this.destination = new this._Point([-122.68782,45.51238]);
+        this.destination = new this._Point(coordLongBeach);
     }
 
     addFeatureLayers() {
